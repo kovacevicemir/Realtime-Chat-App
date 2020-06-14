@@ -12,9 +12,18 @@ app.use(express.static(path.join(__dirname, 'public')))
 
 //Run when client connects
 io.on('connection', socket => {
-    console.log('new web socket connection...')
 
-    socket.emit('message', 'Welcome to chatCord')
+    //Welcome current user (just this user)
+    socket.emit('message', 'Welcome to Pro Chat')
+
+    //Broadcast when a user connects (to everyone except that user)
+    socket.broadcast.emit('message', 'A user has joined the chat');
+
+    //Runs when client disconnects (to everyone)
+    socket.on('disconnect', () => {
+        io.emit('message', 'A user has left the chat')
+    })
+    
 })
 
 const PORT = 3000 || process.env.PORT
