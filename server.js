@@ -3,6 +3,7 @@ const http = require('http')
 const express = require('express')
 const socketio = require('socket.io')
 const formatMessage = require('./utils/messages')
+const {getCurrentUser, userJoin, userLeave, getRoomUsers} = require('./utils/users')
 
 const app = express()
 const server = http.createServer(app)
@@ -16,25 +17,40 @@ const botName = 'PROchat Bot'
 //Run when client connects
 io.on('connection', socket => {
 
+    //Listen for joinRoom
     socket.on('joinRoom', ({username, room}) =>{
+
+        const user = userJoin(socket.id, username, room)
+        socket.join(user.room)
+        //explanation for socket.join
+        //this current socket (current user) will be joined to javaScript room
+        //for example.. and next user will also be joined to javaScript room...
+        //so joining sockets (connections or users) to same room or space...
 
         //Welcome current user (just this user)
         socket.emit('message', formatMessage(botName, 'Welcome to Pro Chat'))
     
         //Broadcast when a user connects (to everyone except that user)
-        socket.broadcast.emit('message', formatMessage(botName,'A user has joined the chat'))
+        socket.broadcast.to(user.room).emit('message', formatMessage(botName,`${user.username} has joined the chat`))
 
     })
 
     
     //Listen for chatMessage
     socket.on('chatMessage', (msg) => {
-        io.emit('message', formatMessage('USER',msg))
+        const user = getCurrentUser(socket.id)
+
+        io.to(user.room).emit('message', formatMessage(user.username ,msg))
     })
     
     //Runs when client disconnects (to everyone)
     socket.on('disconnect', () => {
-        io.emit('message', formatMessage(botName,'A user has left the chat'))
+        const user = userLeave(socket.id)
+
+        if(user){
+            io.to(user.room).emit('message', formatMessage(botName,`${user.username} has left the chat`))
+        }
+
     })
 
 })
