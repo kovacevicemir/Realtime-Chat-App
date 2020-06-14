@@ -16,20 +16,25 @@ const botName = 'PROchat Bot'
 //Run when client connects
 io.on('connection', socket => {
 
-    //Welcome current user (just this user)
-    socket.emit('message', formatMessage(botName, 'Welcome to Pro Chat'))
+    socket.on('joinRoom', ({username, room}) =>{
 
-    //Broadcast when a user connects (to everyone except that user)
-    socket.broadcast.emit('message', formatMessage(botName,'A user has joined the chat'))
+        //Welcome current user (just this user)
+        socket.emit('message', formatMessage(botName, 'Welcome to Pro Chat'))
+    
+        //Broadcast when a user connects (to everyone except that user)
+        socket.broadcast.emit('message', formatMessage(botName,'A user has joined the chat'))
 
-    //Runs when client disconnects (to everyone)
-    socket.on('disconnect', () => {
-        io.emit('message', formatMessage(botName,'A user has left the chat'))
     })
 
+    
     //Listen for chatMessage
     socket.on('chatMessage', (msg) => {
         io.emit('message', formatMessage('USER',msg))
+    })
+    
+    //Runs when client disconnects (to everyone)
+    socket.on('disconnect', () => {
+        io.emit('message', formatMessage(botName,'A user has left the chat'))
     })
 
 })
